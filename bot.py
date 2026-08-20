@@ -254,7 +254,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db_user = db.get_user(user.id)
     
     # এডমিন কিনা চেক করুন
-    if db_user[10] == 1:
+    is_admin = db_user[10] == 1
+    
+    if is_admin:
         await update.message.reply_text("👋 Welcome Admin!", reply_markup=admin_menu)
     else:
         await update.message.reply_text("👋 Welcome!\nUse the buttons below:", reply_markup=main_menu)
@@ -270,22 +272,25 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start(update, context)
         return
     
+    # এডমিন কিনা চেক করুন
+    is_admin = db_user[10] == 1
+    
     # ============================================================
-    # 1️⃣ CANCEL (সবচেয়ে উপরে)
+    # 1️⃣ CANCEL
     # ============================================================
     if text == "❌ Cancel":
         user_states.pop(user_id, None)
         withdraw_states.pop(user_id, None)
-        if db_user[10] == 1:
+        if is_admin:
             await update.message.reply_text("❌ Cancelled!", reply_markup=admin_menu)
         else:
             await update.message.reply_text("❌ Cancelled!", reply_markup=main_menu)
         return
     
     # ============================================================
-    # 2️⃣ ADMIN PANEL (শুধু এডমিন দেখতে পাবে)
+    # 2️⃣ ADMIN PANEL (শুধু এডমিন)
     # ============================================================
-    if db_user[10] == 1:
+    if is_admin:
         if text == "👥 All Users":
             users = db.get_all_users()
             msg = "👥 All Users:\n\n"
@@ -336,7 +341,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
     
     # ============================================================
-    # 3️⃣ MAIN MENU (সব ইউজারের জন্য)
+    # 3️⃣ MAIN MENU (সব ইউজার)
     # ============================================================
     if text == "📋 Task":
         await update.message.reply_text("📋 Select Task:", reply_markup=task_menu)
