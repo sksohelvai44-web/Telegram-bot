@@ -1,13 +1,12 @@
 import os
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Enable logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Get token from environment variable
 TOKEN = os.environ.get("BOT_TOKEN")
 
 if not TOKEN:
@@ -171,25 +170,39 @@ You must use the information provided by the Telegram bot to register.
         )
 
     else:
-        # Default: Go to main menu
         await query.edit_message_text(
             "🏠 Main Menu",
             reply_markup=get_main_menu()
         )
+
+# ==================== SET BOT COMMANDS ====================
+async def set_commands(app):
+    """Set persistent menu commands"""
+    commands = [
+        BotCommand("start", "🚀 Start the bot"),
+        BotCommand("menu", "📋 Show main menu"),
+        BotCommand("balance", "💰 Check balance"),
+        BotCommand("withdraw", "💳 Withdraw money"),
+        BotCommand("profile", "👤 View profile"),
+        BotCommand("refer", "🔗 Referral program"),
+        BotCommand("language", "🌐 Change language"),
+    ]
+    await app.bot.set_my_commands(commands)
 
 # ==================== MAIN ====================
 def main():
     """Start the bot"""
     logger.info("Starting bot...")
     
-    # Create application
     app = Application.builder().token(TOKEN).build()
+    
+    # Set persistent menu commands
+    app.post_init = set_commands
     
     # Add handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     
-    # Run the bot
     logger.info("🤖 Bot is running...")
     app.run_polling()
 
