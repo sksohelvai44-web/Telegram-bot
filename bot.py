@@ -253,7 +253,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.create_user(user.id, user.username or "NoUsername", user.first_name or "User")
         db_user = db.get_user(user.id)
     
-    # এডমিন কিনা চেক করুন
     is_admin = db_user[10] == 1
     
     if is_admin:
@@ -272,12 +271,9 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start(update, context)
         return
     
-    # এডমিন কিনা চেক করুন
     is_admin = db_user[10] == 1
     
-    # ============================================================
-    # 1️⃣ CANCEL
-    # ============================================================
+    # ===== CANCEL =====
     if text == "❌ Cancel":
         user_states.pop(user_id, None)
         withdraw_states.pop(user_id, None)
@@ -287,9 +283,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Cancelled!", reply_markup=main_menu)
         return
     
-    # ============================================================
-    # 2️⃣ ADMIN PANEL (শুধু এডমিন)
-    # ============================================================
+    # ===== ADMIN PANEL =====
     if is_admin:
         if text == "👥 All Users":
             users = db.get_all_users()
@@ -340,9 +334,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
     
-    # ============================================================
-    # 3️⃣ MAIN MENU (সব ইউজার)
-    # ============================================================
+    # ===== MAIN MENU =====
     if text == "📋 Task":
         await update.message.reply_text("📋 Select Task:", reply_markup=task_menu)
         return
@@ -369,10 +361,14 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if text == "🔗 Refer":
-        link = f"https://t.me/{context.bot.username}?start=ref_{db_user[6]}"
         await update.message.reply_text(
-            f"🔗 Referral Program\n\nYour link:\n{link}\n\n💰 Commission: {db_user[8]:.2f} BDT",
-            reply_markup=main_menu
+            f"🔗 **Referral Program**\n\n"
+            f"💰 Earn 10% commission for life!\n\n"
+            f"Your referral link:\n"
+            f"`https://t.me/easyearnultimate_bot?start=ref_{db_user[6]}`\n\n"
+            f"📊 Commission Earned: {db_user[8]:.2f} BDT",
+            reply_markup=main_menu,
+            parse_mode="Markdown"
         )
         return
     
@@ -380,9 +376,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🌐 Select Language:", reply_markup=language_menu)
         return
     
-    # ============================================================
-    # 4️⃣ TASK MENU
-    # ============================================================
+    # ===== TASK MENU =====
     if text == "📱 Insta 2FA 4 BDT":
         user_states[user_id] = {'task': 'instagram'}
         await update.message.reply_text(
@@ -395,9 +389,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📘 Facebook Task\n\n⏳ Coming soon!", reply_markup=task_menu)
         return
     
-    # ============================================================
-    # 5️⃣ INSTAGRAM FLOW
-    # ============================================================
+    # ===== INSTAGRAM FLOW =====
     if text == "✅ Start" and user_id in user_states and user_states[user_id].get('task') == 'instagram':
         username, password = generate_credentials()
         task_id = db.create_instagram_task(db_user[0], username, password)
@@ -459,9 +451,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ No active task!", reply_markup=main_menu)
         return
     
-    # ============================================================
-    # 6️⃣ WITHDRAW
-    # ============================================================
+    # ===== WITHDRAW =====
     if text == "📱 Bkash":
         withdraw_states[user_id] = {'method': 'Bkash', 'step': 'number'}
         await update.message.reply_text("📱 Enter your Bkash number:\nExample: 01XXXXXXXXX", reply_markup=cancel_menu)
@@ -507,9 +497,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Enter a valid number!", reply_markup=cancel_menu)
         return
     
-    # ============================================================
-    # 7️⃣ LANGUAGE
-    # ============================================================
+    # ===== LANGUAGE =====
     if text == "🇬🇧 English":
         db.cursor.execute("UPDATE users SET language = 'en' WHERE telegram_id = ?", (user_id,))
         db.conn.commit()
@@ -522,9 +510,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ ভাষা পরিবর্তন করে বাংলা করা হয়েছে!", reply_markup=main_menu)
         return
     
-    # ============================================================
-    # 8️⃣ UNKNOWN
-    # ============================================================
+    # ===== UNKNOWN =====
     await update.message.reply_text("❌ Unknown command! Please use the buttons below.", reply_markup=main_menu)
 
 # ==================== PERSISTENT MENU ====================
