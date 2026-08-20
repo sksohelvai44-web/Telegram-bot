@@ -183,27 +183,6 @@ class Database:
         self.cursor.execute("SELECT * FROM instagram_tasks WHERE user_id = ? ORDER BY id DESC", (user_id,))
         return self.cursor.fetchall()
     
-    def get_task_by_id(self, task_id):
-        self.cursor.execute('''
-            SELECT t.*, u.username, u.first_name 
-            FROM instagram_tasks t
-            JOIN users u ON t.user_id = u.id
-            WHERE t.id = ?
-        ''', (task_id,))
-        return self.cursor.fetchone()
-    
-    def approve_task(self, task_id):
-        self.cursor.execute('''
-            UPDATE instagram_tasks SET status = 'approved' WHERE id = ?
-        ''', (task_id,))
-        self.conn.commit()
-    
-    def reject_task(self, task_id):
-        self.cursor.execute('''
-            UPDATE instagram_tasks SET status = 'rejected' WHERE id = ?
-        ''', (task_id,))
-        self.conn.commit()
-    
     def close(self):
         self.conn.close()
 
@@ -221,7 +200,7 @@ def get_main_keyboard():
 
 def get_task_keyboard():
     keyboard = [
-        [KeyboardButton("📱 Instagram 2FA"), KeyboardButton("📘 Facebook")],
+        [KeyboardButton("📱 Insta 2FA 4 BDT"), KeyboardButton("📘 Facebook")],
         [KeyboardButton("❌ Cancel")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
@@ -318,16 +297,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Show admin menu if admin
     if db_user and db_user[10] == 1:
         await update.message.reply_text(
-            f"👋 Welcome Admin {first_name}!\n\n"
-            "📌 You have admin access.\n"
-            "✅ Use the buttons below:",
+            f"👋 Welcome Admin {first_name}!",
             reply_markup=get_admin_keyboard()
         )
     else:
         await update.message.reply_text(
             f"👋 Welcome {first_name}!\n\n"
-            "📌 This bot helps you earn money by doing simple tasks.\n"
-            "✅ Use the buttons below to navigate:",
+            "📌 This bot helps you earn money by doing simple tasks.",
             reply_markup=get_main_keyboard()
         )
 
@@ -360,7 +336,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     # ========== ADMIN PANEL ==========
-    if db_user[10] == 1:
+    if db_user and db_user[10] == 1:
         if text == "👥 All Users":
             users = db.get_all_users()
             msg = "👥 **All Users:**\n\n"
@@ -415,16 +391,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="Markdown"
             )
             return
-        
-        elif text == "🏠 Main Menu":
-            await update.message.reply_text("🏠 Main Menu", reply_markup=get_main_keyboard())
-            return
     
-    # ========== MAIN MENU (User) ==========
+    # ========== MAIN MENU (All Users) ==========
+    
+    # === TASK ===
     if text == "📋 Task":
         await update.message.reply_text("📋 Select Task Type:", reply_markup=get_task_keyboard())
         return
     
+    # === BALANCE ===
     elif text == "💰 Balance":
         await update.message.reply_text(
             f"💰 **Your Balance**\n\n"
@@ -436,6 +411,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # === WITHDRAW ===
     elif text == "💳 Withdraw":
         if db_user[3] < 50:
             await update.message.reply_text(
@@ -450,6 +426,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # === PROFILE ===
     elif text == "👤 Profile":
         await update.message.reply_text(
             f"👤 **Your Profile**\n\n"
@@ -464,6 +441,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # === REFER ===
     elif text == "🔗 Refer":
         await update.message.reply_text(
             f"🔗 **Referral Program**\n\n"
@@ -476,12 +454,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # === LANGUAGE ===
     elif text == "🌐 Language":
         await update.message.reply_text("🌐 Select Language:", reply_markup=get_language_keyboard())
         return
     
     # ========== TASK MENU ==========
-    elif text == "📱 Instagram 2FA":
+    
+    # === INSTA 2FA (নতুন নাম) ===
+    elif text == "📱 Insta 2FA 4 BDT":
         user_states[user_id] = {'task': 'instagram'}
         await update.message.reply_text(
             "⏳ Review time: 24 h\n\n"
@@ -490,20 +471,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🔐 REQUIRED!\n"
             "You must use the information provided by the Telegram bot to register.\n\n"
             "❗If you use your own information, your application will be REJECTED without verification.\n\n"
-            "💰 Reward: 4.00 BDT\n\n"
+            "💰 **Reward: 4.00 BDT**\n\n"
             "After registration:\n"
             "👉 No need to send any info\n"
             "✅ Just click the 'Account Registered' button\n\n"
             "⏳ Review time: 24 h",
-            reply_markup=get_instagram_keyboard()
+            reply_markup=get_instagram_keyboard(),
+            parse_mode="Markdown"
         )
         return
     
+    # === FACEBOOK ===
     elif text == "📘 Facebook":
         await update.message.reply_text("📘 Facebook Task\n\n⏳ Coming soon!", reply_markup=get_task_keyboard())
         return
     
     # ========== INSTAGRAM TASK FLOW ==========
+    
+    # === START ===
     elif text == "✅ Start" and user_id in user_states and user_states[user_id].get('task') == 'instagram':
         username, password = generate_credentials()
         task_id = db.create_instagram_task(db_user[0], username, password)
@@ -521,6 +506,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # === VIDEO ===
     elif text == "🎥 Video" and user_id in user_states and user_states[user_id].get('task') == 'instagram':
         await update.message.reply_text(
             "🎥 Tutorial Video:\n\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -528,7 +514,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
-    # ========== SET 2FA ==========
+    # === SET 2FA ===
     elif text == "🔐 Set 2FA":
         if user_id in user_states and user_states[user_id].get('step') == 'credentials':
             user_states[user_id]['step'] = 'waiting_2fa_key'
@@ -544,7 +530,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ No active task!", reply_markup=get_main_keyboard())
         return
     
-    # ========== HANDLE 2FA KEY ==========
+    # === HANDLE 2FA KEY ===
     elif user_id in user_states and user_states[user_id].get('step') == 'waiting_2fa_key':
         user_2fa_key = text.strip().upper()
         
@@ -577,15 +563,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
     
-    # ========== DONE ==========
+    # === DONE ===
     elif text == "✅ Done":
         if user_id in user_states and user_states[user_id].get('step') == 'done':
             task_id = user_states[user_id]['task_id']
             db.update_instagram_task(task_id, 'completed')
-            db.add_balance(db_user[0], 4.00)  # 4 টাকা রিওয়ার্ড
+            db.add_balance(db_user[0], 4.00)
             
             if db_user[5]:
-                db.add_balance(db_user[5], 0.40)  # 10% কমিশন
+                db.add_balance(db_user[5], 0.40)
             
             user_states.pop(user_id, None)
             
@@ -601,6 +587,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     # ========== WITHDRAW ==========
+    
+    # === BKASH ===
     elif text == "📱 Bkash":
         withdraw_states[user_id] = {'method': 'Bkash', 'step': 'number'}
         await update.message.reply_text(
@@ -609,6 +597,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # === NAGAD ===
     elif text == "📱 Nagad":
         withdraw_states[user_id] = {'method': 'Nagad', 'step': 'number'}
         await update.message.reply_text(
@@ -617,7 +606,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
-    # ========== HANDLE WITHDRAW NUMBER ==========
+    # === HANDLE WITHDRAW NUMBER ===
     elif user_id in withdraw_states and withdraw_states[user_id].get('step') == 'number':
         if text.isdigit() and len(text) == 11:
             withdraw_states[user_id]['number'] = text
@@ -638,7 +627,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
     
-    # ========== HANDLE WITHDRAW AMOUNT ==========
+    # === HANDLE WITHDRAW AMOUNT ===
     elif user_id in withdraw_states and withdraw_states[user_id].get('step') == 'amount':
         try:
             amount = float(text)
@@ -683,10 +672,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # ========== UNKNOWN ==========
     else:
-        if db_user[10] == 1:
-            await update.message.reply_text("❌ Unknown!", reply_markup=get_admin_keyboard())
-        else:
-            await update.message.reply_text("❌ Unknown!", reply_markup=get_main_keyboard())
+        await update.message.reply_text("❌ Unknown command! Please use the buttons below.", reply_markup=get_main_keyboard())
 
 # ==================== PERSISTENT MENU ====================
 
