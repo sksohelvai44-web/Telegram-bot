@@ -11,7 +11,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-TOKEN = os.environ.get("BOT_TOKEN")
+TOKEN = os.environ.get("8933526364:AAFSynZA-3ghNgGkI5M-X7tgg3o5RhzxYGY")
 ADMIN_IDS = [7816083990]  # 👈 আপনার আইডি
 
 if not TOKEN:
